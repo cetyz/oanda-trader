@@ -15,7 +15,20 @@ import time
 
 
 class Oanda():
-    def __init__(self, token, account, user, practice=True):
+    def __init__(self, token, account, user, practice=True, time_format='RFC3339'):
+        """
+        Create your Oanda client to make requests from.
+        
+        Parameters:
+        token (str): Your secret key.
+        account (str): Your account number.
+        user (str): Your username.
+        pratice (bool): If True, the practice server, else, the regular server.
+        time_format (str): Format to return time values in. 'RFC3339' or 'UNIX'.
+        
+        Returns:
+        Oanda object.
+        """
         if practice:
             self.base_url = 'https://api-fxpractice.oanda.com'
         else:
@@ -23,6 +36,7 @@ class Oanda():
         self.token = token
         self.account = account
         self.user = user
+        self.time_format = time_format
         print('Client initialized for user', self.user)
         print()
 
@@ -33,7 +47,7 @@ class Oanda():
 #        return(json.dumps(header))
             
     
-    def get_candle(self, time_format='RFC3339', instrument='USD_JPY', count=1):
+    def get_candle(self, instrument='USD_JPY', count=1):
         """
         Function to get the lastest 5 second candle.
         
@@ -48,7 +62,7 @@ class Oanda():
         JSON object
         """
         headers = {'Authorization': 'Bearer ' + self.token,
-                  'Accept-Datetime-Format': time_format}
+                  'Accept-Datetime-Format': self.time_format}
 
         url = self.base_url + '/v3/instruments/' + instrument + '/candles' +\
             '?count=' + str(count)
@@ -62,7 +76,7 @@ class Oanda():
                 time.sleep(3)
         return json.loads(r.text)
 
-    def market_order(self, time_format='RFC3339', instrument='USD_JPY', units=10.0):
+    def market_order(self, instrument='USD_JPY', units=10.0):
         """
         Function to create a market order.
         
@@ -76,7 +90,7 @@ class Oanda():
         """
         headers = {
                 'Authorization': 'Bearer ' + self.token,
-                'Accept-Datetime-Format': time_format,
+                'Accept-Datetime-Format': self.time_format,
                 'Content-type': 'application/json',
                 }
         
@@ -106,6 +120,7 @@ if __name__ == "__main__":
         user = configs['user']
         
     oanda = Oanda(token=token, account=account, user=user)
-    oanda.market_buy(time_format='RFC3339', instrument='USD_JPY', units=10.0)
+    print(oanda.get_candle())
+    oanda.market_order(instrument='USD_JPY', units=10.0)
     time.sleep(10)
-    oanda.market_buy(time_format='RFC3339', instrument='USD_JPY', units=-10.0)
+    oanda.market_order(instrument='USD_JPY', units=-10.0)
