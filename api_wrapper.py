@@ -10,6 +10,7 @@ import json
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+import time
 
 
 
@@ -23,6 +24,7 @@ class Oanda():
         self.account = account
         self.user = user
         print('Client initialized for user', self.user)
+        print()
 
 #    def generate_header(self, header_dictionary):
 #        header = {}
@@ -38,7 +40,7 @@ class Oanda():
         Aside for the params to pass in, all other query parameters will be the default.
         
         Parameters:
-        time_format (str): Default time format to 'UNIX'. Can also be 'RFC3339'.
+        time_format (str): Default time format to 'RFC3339'. Can also be 'UNIX'.
         instrument (str): One of the currency pairs. Defaults to 'USD_JPY'.
         count (int): Number of candles to return. Defaults to '1'. Maximum of '5000'.
         
@@ -55,9 +57,46 @@ class Oanda():
             r = requests.get(url=url, headers=headers)
             if r:
                 success = True
+            else:
+                print('Request failed, trying again in 3 secs')
+                time.sleep(3)
         return json.loads(r.text)
 
+    def market_order(self, time_format='RFC3339', instrument='USD_JPY', units=10.0):
+        """
+        Function to create a market order.
+        
+        For simplicity's sake, you can only pass in the instrument (pair)
+        and the number of units to buy/sell
+        
+        Parameters:
+        time_format(str): Default time format to 'RFC3339'. Can also be 'UNIX'
+        instrument(str): One of the currency pairs. Defaults to 'USD_JPY'.
+        units(float): Number of units to buy (if positive) or sell (if negative)
+        """
+        headers = {
+                'Authorization': 'Bearer ' + self.token,
+                'Accept-Datetime-Format': time_format,
+                'Content-type': 'application/json',
+                }
+        
+        data = {
+            'order': {
+                'type': 'MARKET',
+                'instrument': instrument,
+                'units': str(units),
+                'timeInForce': 'FOK',
+                'positionFill': 'DEFAULT',
+                }
+            }
+        
+        url = self.base_url + '/v3/accounts/' + self.account + '/orders'
+        
+        r = requests.post(url=url, headers=headers, data=json.dumps(data))
 
+        print(json.loads(r.text))
+        return(r)
+        
         
 if __name__ == "__main__":
     with open('config.json', 'r') as f:
@@ -67,4 +106,6 @@ if __name__ == "__main__":
         user = configs['user']
         
     oanda = Oanda(token=token, account=account, user=user)
-    print(oanda.get_candle())
+    oanda.market_buy(time_format='RFC3339', instrument='USD_JPY', units=10.0)
+    time.sleep(10)
+    oanda.market_buy(time_format='RFC3339', instrument='USD_JPY', units=-10.0)
