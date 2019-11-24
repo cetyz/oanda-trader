@@ -9,7 +9,7 @@ from api_wrapper import Oanda
 from temp.google_utils.authentication.authenticator import Authenticator
 from temp.google_utils.sheets.sheetmanager import SheetManager
 
-keys = 'google-keys.json'
+keys = 'keys.json'
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 
