@@ -121,6 +121,6 @@ if __name__ == "__main__":
         
     oanda = Oanda(token=token, account=account, user=user)
     print(oanda.get_candle())
-    oanda.market_order(instrument='USD_JPY', units=10.0)
-    time.sleep(10)
-    oanda.market_order(instrument='USD_JPY', units=-10.0)
+#    oanda.market_order(instrument='USD_JPY', units=10.0)
+#    time.sleep(10)
+#    oanda.market_order(instrument='USD_JPY', units=-10.0)
