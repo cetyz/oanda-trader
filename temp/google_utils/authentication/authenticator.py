@@ -31,7 +31,7 @@ class Authenticator():
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        key_type = json.load(open(keys, 'r'))['type']
+        key_type = json.load(open(self.keys, 'r'))['type']
         if key_type != 'service_account':
             if os.path.exists('token.pickle'):
                 with open('token.pickle', 'rb') as token:
