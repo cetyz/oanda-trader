@@ -114,10 +114,7 @@ class Oanda():
         
         
 if __name__ == "__main__":
-    
-    import numpy as np
-    import pandas as pd
-    
+   
     with open('config.json', 'r') as f:
         configs = json.load(f)
         token = configs['token']
@@ -126,18 +123,7 @@ if __name__ == "__main__":
         
     oanda = Oanda(token=token, account=account, user=user)
     candles = oanda.get_candle(count=5)['candles']
-    df = pd.DataFrame(candles)
-
-    def get_value(series, key):
-        return(series[key])
-    
-    df['o'] = df.apply(lambda x: get_value(x['mid'], 'o'), axis=1)
-    df['h'] = df.apply(lambda x: get_value(x['mid'], 'h'), axis=1)
-    df['l'] = df.apply(lambda x: get_value(x['mid'], 'l'), axis=1)
-    df['c'] = df.apply(lambda x: get_value(x['mid'], 'c'), axis=1)
-    
-    df = df[['complete', 'volume', 'time', 'o', 'h', 'l', 'c']].set_index('time')
-    print(df)
+    print(candles)
 #    oanda.market_order(instrument='USD_JPY', units=10.0)
 #    time.sleep(10)
 #    oanda.market_order(instrument='USD_JPY', units=-10.0)
