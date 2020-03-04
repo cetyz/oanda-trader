@@ -112,6 +112,22 @@ class Oanda():
         print(json.loads(r.text))
         return(r)
         
+    def get_open_positions(self):
+        """
+        Function to get all OPEN positions.
+        
+        """
+        
+        headers = {
+                'Authorization': 'Bearer ' + self.token,
+                }
+        
+        url = self.base_url + '/v3/accounts/' + self.account + '/openPositions'
+        
+        r = requests.get(url=url, headers=headers)
+        
+        return(r.text)
+        
         
 if __name__ == "__main__":
    
@@ -122,8 +138,13 @@ if __name__ == "__main__":
         user = configs['user']
         
     oanda = Oanda(token=token, account=account, user=user)
-    candles = oanda.get_candle(count=5)['candles']
-    print(candles)
+#    candles = oanda.get_candle(count=5)['candles']
+#    print(candles)
+        
+#    print(oanda.get_open_positions())
+#        
 #    oanda.market_order(instrument='USD_JPY', units=10.0)
+#    print(oanda.get_open_positions())
 #    time.sleep(10)
 #    oanda.market_order(instrument='USD_JPY', units=-10.0)
+#    print(oanda.get_open_positions())
