@@ -47,7 +47,7 @@ class Oanda():
 #        return(json.dumps(header))
             
     
-    def get_candle(self, instrument='USD_JPY', count=1):
+    def get_candle(self, instrument='USD_JPY', count=1, granularity='S5'):
         """
         Function to get the lastest 5 second candle.
         
@@ -57,16 +57,18 @@ class Oanda():
         time_format (str): Default time format to 'RFC3339'. Can also be 'UNIX'.
         instrument (str): One of the currency pairs. Defaults to 'USD_JPY'.
         count (int): Number of candles to return. Defaults to '1'. Maximum of '5000'.
+        granularity (str): S5, S10, S15, S30, M1, M2, M4, M5, M10, M15, M30, H1,
+            H2, H3, H4, H6, H8, H12, D, W, M. Defaults to 'S5'.
         
         Returns:
         JSON object
         """
-        print('Attemping to get the last', count, 'USD/JPY 5 sec candles')
+        print('Attemping to get the last', count, instrument, granularity, 'candles')
         headers = {'Authorization': 'Bearer ' + self.token,
                   'Accept-Datetime-Format': self.time_format}
 
         url = self.base_url + '/v3/instruments/' + instrument + '/candles' +\
-            '?count=' + str(count)
+            '?count=' + str(count) + '&granularity=' + str(granularity)
         success = False
         while not success:
             r = requests.get(url=url, headers=headers)
@@ -138,8 +140,8 @@ if __name__ == "__main__":
         user = configs['user']
         
     oanda = Oanda(token=token, account=account, user=user)
-#    candles = oanda.get_candle(count=5)['candles']
-#    print(candles)
+    candles = oanda.get_candle(count=5)['candles']
+    print(candles)
         
 #    print(oanda.get_open_positions())
 #        
