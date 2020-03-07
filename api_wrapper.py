@@ -79,7 +79,7 @@ class Oanda():
                 time.sleep(3)
         return json.loads(r.text)
 
-    def market_order(self, instrument='USD_JPY', units=10.0):
+    def market_order(self, instrument='USD_JPY', units=10.0, stop_loss=None, take_profit=None):
         """
         Function to create a market order.
         
@@ -90,11 +90,21 @@ class Oanda():
         time_format(str): Default time format to 'RFC3339'. Can also be 'UNIX'
         instrument(str): One of the currency pairs. Defaults to 'USD_JPY'.
         units(float): Number of units to buy (if positive) or sell (if negative)
+        stop_loss(float or int): Price at which to set stop loss
+        take_profit(float or int): Price at which to set take profit
         """
         headers = {
                 'Authorization': 'Bearer ' + self.token,
                 'Accept-Datetime-Format': self.time_format,
                 'Content-type': 'application/json',
+                }
+        
+        stop_loss_details = {
+                'price': stop_loss,
+                }
+        
+        take_profit_details = {
+                'price': take_profit,
                 }
         
         data = {
@@ -106,6 +116,12 @@ class Oanda():
                 'positionFill': 'DEFAULT',
                 }
             }
+        
+        if stop_loss is not None:
+            data['order']['stopLossOnFill'] = stop_loss_details
+        
+        if take_profit is not None:
+            data['order']['takeProfitOnFill'] = take_profit_details
         
         url = self.base_url + '/v3/accounts/' + self.account + '/orders'
         
@@ -142,11 +158,11 @@ if __name__ == "__main__":
     oanda = Oanda(token=token, account=account, user=user)
     candles = oanda.get_candle(count=5)['candles']
     print(candles)
-        
+#        
 #    print(oanda.get_open_positions())
 #        
-#    oanda.market_order(instrument='USD_JPY', units=10.0)
+#    oanda.market_order(instrument='USD_JPY', units=10.0, stop_loss=1, take_profit=10000)
 #    print(oanda.get_open_positions())
 #    time.sleep(10)
-#    oanda.market_order(instrument='USD_JPY', units=-10.0)
+#    oanda.market_order(instrument='USD_JPY', units=-10.0, stop_loss=1, take_profit=10000)
 #    print(oanda.get_open_positions())
