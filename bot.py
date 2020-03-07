@@ -11,14 +11,19 @@ import json
 
 from api_wrapper import Oanda
 
+# get log in info from json
 with open('config.json', 'r') as f:
     configs = json.load(f)
     token = configs['token']
     account = configs['account']
     user = configs['user']
     
+    
+# initialize oanda api wrapper and get candles    
 oanda = Oanda(token=token, account=account, user=user)
-candles = oanda.get_candle(count=720)['candles']
+candles = oanda.get_candle(count=30)['candles']
+
+# load candles into pandas dataframe
 df = pd.DataFrame(candles)
 df['time'] = pd.to_datetime(df['time'])
 
@@ -31,4 +36,16 @@ df['l'] = df.apply(lambda x: get_value(x['mid'], 'l'), axis=1)
 df['c'] = df.apply(lambda x: get_value(x['mid'], 'c'), axis=1)
 
 df = df[['complete', 'volume', 'time', 'o', 'h', 'l', 'c']].set_index('time')
-print(df)
+
+
+
+# get RSI
+# which is 100 - (100 / (1 + RS))
+# where RS = Average Gain / Average Loss
+
+# create new df for this using only close data
+
+
+#print(rsi_df)
+
+#print(df)
