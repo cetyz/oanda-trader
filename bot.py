@@ -21,7 +21,7 @@ with open('config.json', 'r') as f:
     
 # initialize oanda api wrapper and get candles    
 oanda = Oanda(token=token, account=account, user=user)
-candles = oanda.get_candle(count=30)['candles']
+candles = oanda.get_candle(count=760)['candles']
 
 # load candles into pandas dataframe
 df = pd.DataFrame(candles)
@@ -37,7 +37,10 @@ df['c'] = df.apply(lambda x: get_value(x['mid'], 'c'), axis=1)
 
 df = df[['complete', 'volume', 'time', 'o', 'h', 'l', 'c']].set_index('time')
 
-
+df['o'] = pd.to_numeric(df['o'])
+df['h'] = pd.to_numeric(df['h'])
+df['l'] = pd.to_numeric(df['l'])
+df['c'] = pd.to_numeric(df['c'])
 
 # get RSI
 # which is 100 - (100 / (1 + RS))
