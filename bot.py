@@ -10,6 +10,7 @@ import pandas as pd
 import json
 
 from api_wrapper import Oanda
+from TA_funcs import RSI, MACD, MACD_signal
 
 # get log in info from json
 with open('config.json', 'r') as f:
@@ -21,7 +22,7 @@ with open('config.json', 'r') as f:
     
 # initialize oanda api wrapper and get candles    
 oanda = Oanda(token=token, account=account, user=user)
-candles = oanda.get_candle(count=760)['candles']
+candles = oanda.get_candle(count=5000)['candles']
 
 # load candles into pandas dataframe
 df = pd.DataFrame(candles)
@@ -42,13 +43,8 @@ df['h'] = pd.to_numeric(df['h'])
 df['l'] = pd.to_numeric(df['l'])
 df['c'] = pd.to_numeric(df['c'])
 
-# get RSI
-# which is 100 - (100 / (1 + RS))
-# where RS = Average Gain / Average Loss
+df['RSI'] = RSI(df['c'])
+df['MACD'] = MACD(df['c'])
+df['MACD Signal'] = MACD_signal(df['c'])
 
-# create new df for this using only close data
-
-
-#print(rsi_df)
-
-#print(df)
+print(df.head())
