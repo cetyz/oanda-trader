@@ -22,7 +22,7 @@ with open('config.json', 'r') as f:
     
 # initialize oanda api wrapper and get candles    
 oanda = Oanda(token=token, account=account, user=user)
-candles = oanda.get_candle(count=5000)['candles']
+candles = oanda.get_candle(count=5000, granularity='M5')['candles']
 
 # load candles into pandas dataframe
 df = pd.DataFrame(candles)
@@ -37,6 +37,8 @@ df['l'] = df.apply(lambda x: get_value(x['mid'], 'l'), axis=1)
 df['c'] = df.apply(lambda x: get_value(x['mid'], 'c'), axis=1)
 
 df = df[['complete', 'volume', 'time', 'o', 'h', 'l', 'c']].set_index('time')
+
+#df.to_csv('test_data.csv')
 
 df['o'] = pd.to_numeric(df['o'])
 df['h'] = pd.to_numeric(df['h'])
