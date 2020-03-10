@@ -8,6 +8,7 @@ Created on Mon Mar  9 23:04:47 2020
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.utils import shuffle
 
 '''
 # current plan is to get the mean of the future 24? closes and if it is larger
@@ -59,59 +60,108 @@ def shift_data(df, series_name, time_periods=1, down=True):
     
     return(new_df)
 
+def create_historical_data(df, col_name_list, time_periods):
+    
+    new_df = pd.DataFrame()
+    
+    for col_name in col_name_list:
+        for period in range(time_periods):
+            period += 1
+            new_df[col_name+'-'+str(period)] = df[col_name].shift(period)
+        
+    return(new_df)
+
+def create_future_data(df, target_name, num_of_targets, future_periods):
+    
+    new_df = pd.DataFrame()
+    
+    for i in range(num_of_targets):
+        i += future_periods
+        new_df[target_name+'+'+str(i)] = df[target_name].shift(-i)
+        
+    return(new_df)
+
+
+
 if __name__ == '__main__':
     
     data_path = 'test_data.csv'
     df = pd.read_csv(data_path)
     
-    time_periods = 30
-    df = shift_data(df, 'volume', time_periods, down=False)
-    df = shift_data(df, 'c', time_periods, down=False)
+    time_periods = 36
+    features_list = ['volume', 'c']
     
-    df['target'] = df['c'].shift(-15)
+    historical_data = create_historical_data(df, features_list, time_periods)
+    
+    df = df.join(historical_data)
+    
+    target_name = 'c'
+    num_of_targets = 5
+    future_periods = 36
+    future_data = create_future_data(df, target_name, num_of_targets, future_periods)
+    
+    mean_future_data = future_data.median(axis=1)
+    mean_future_data.name = 'future_median'
+    
+    df = df.join(mean_future_data)
+    
+    df['diff prop'] = (df['future_median'] - df['c']) / df['c']
+    
+    df['is_diff'] = 0
+    df.loc[df['diff prop'] > 0.005, 'is_diff'] = 1
+    df.loc[df['diff prop'] < -0.005, 'is_diff'] = 2
     
     df = df.dropna()
     
-    TRAIN_SPLIT = int(len(df) * 2 / 3)
+    targets_df = pd.get_dummies(df['is_diff'])
     
-    tf.random.set_seed(0)
+    num_of_cats = len(targets_df.columns)
     
-    
-    features_considered = ['volume'+str(period+1) for period in range(time_periods)]
-    features_considered2 = ['c'+str(period+1) for period in range(time_periods)]
+    features_considered = ['volume'+'-'+str(period+1) for period in range(time_periods)]
+    features_considered2 = ['c'+'-'+str(period+1) for period in range(time_periods)]
     
     features_considered.extend(features_considered2)
-    features_considered.append('target')
     
     features = df[features_considered]
     features.index=df['time']
+
+    TRAIN_SPLIT = int(len(features) * 2 / 3)
+    
+    tf.random.set_seed(0)    
     
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(128, activation='relu')
+        tf.keras.layers.Dense(600, activation='relu'),
+        tf.keras.layers.Dense(256, activation='relu'),
+        tf.keras.layers.Dense(3, activation='softmax'),
         ])
     
-    loss_fn = tf.keras.losses.MeanSquaredError()
+    loss_fn = tf.keras.losses.CategoricalCrossentropy()
     
-    dataset = features.iloc[:, :-1].values
+    # dataset = features.iloc[:, :-1].values
+    dataset = features.values
     data_mean = dataset.mean(axis=0)
     data_std = dataset.std(axis=0)
     dataset = (dataset-data_mean)/data_std
     
+    targets = targets_df.values
+    
+    dataset, targets = shuffle(dataset, targets, random_state=0)
+    
     x_train = dataset[:TRAIN_SPLIT]
     
     x_test = dataset[TRAIN_SPLIT:]
-    
 
-    
-    # x_train = features.iloc[:TRAIN_SPLIT, :-1].values
-    y_train = features.iloc[:TRAIN_SPLIT, -1].values
-    
-    # x_test = features.iloc[TRAIN_SPLIT:, :-1].values
-    y_test = features.iloc[TRAIN_SPLIT:, -1].values
+    y_train = targets[:TRAIN_SPLIT]
+
+    y_test = targets[TRAIN_SPLIT:]
     
     
     model.compile(optimizer='adam',
                   loss=loss_fn,
-                  metrics=['MeanAbsoluteError'])
-    model.fit(x_train, y_train, epochs=10000)
+                  metrics=['CategoricalAccuracy'])
+    
+    predictions = model(x_train).numpy()
+    
+    model.fit(x_train, y_train, epochs=1000)
+    
     model.evaluate(x_test, y_test)
