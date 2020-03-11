@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.utils import shuffle
+from sklearn.utils import resample
 
 '''
 # current plan is to get the mean of the future 24? closes and if it is larger
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     data_path = 'test_data.csv'
     df = pd.read_csv(data_path)
     
-    time_periods = 36
+    time_periods = 48
     features_list = ['volume', 'c']
     
     historical_data = create_historical_data(df, features_list, time_periods)
@@ -96,7 +97,7 @@ if __name__ == '__main__':
     df = df.join(historical_data)
     
     target_name = 'c'
-    num_of_targets = 5
+    num_of_targets = 6
     future_periods = 36
     future_data = create_future_data(df, target_name, num_of_targets, future_periods)
     
@@ -108,10 +109,29 @@ if __name__ == '__main__':
     df['diff prop'] = (df['future_median'] - df['c']) / df['c']
     
     df['is_diff'] = 0
-    df.loc[df['diff prop'] > 0.005, 'is_diff'] = 1
-    df.loc[df['diff prop'] < -0.005, 'is_diff'] = 2
+    df.loc[df['diff prop'] > 0.004, 'is_diff'] = 1
+    df.loc[df['diff prop'] < -0.004, 'is_diff'] = 2
     
     df = df.dropna()
+    
+    # BALANCE
+    df_no_diff = df[df['is_diff'] == 0]
+    
+    df_higher = df[df['is_diff'] == 1]
+    df_lower = df[df['is_diff'] == 2]
+    
+    df_higher_upsampled = resample(df_higher,
+                                  replace=True,
+                                  n_samples=len(df_no_diff),
+                                  random_state=0)
+    
+    df_lower_upsampled = resample(df_lower,
+                                 replace=True,
+                                 n_samples=len(df_no_diff),
+                                 random_state=0)
+    
+    df = pd.concat([df_no_diff, df_higher_upsampled, df_lower_upsampled])
+    
     
     targets_df = pd.get_dummies(df['is_diff'])
     
@@ -160,8 +180,10 @@ if __name__ == '__main__':
                   loss=loss_fn,
                   metrics=['CategoricalAccuracy'])
     
-    predictions = model(x_train).numpy()
+    
     
     model.fit(x_train, y_train, epochs=1000)
     
     model.evaluate(x_test, y_test)
+    
+    predictions = model(x_test).numpy()
