@@ -11,42 +11,6 @@ import tensorflow as tf
 from sklearn.utils import shuffle
 from sklearn.utils import resample
 
-'''
-# current plan is to get the mean of the future 24? closes and if it is larger
-# than 0.3% (testing on 5M candles) of the original flag as larger
-
-# then part two is to do the same but to flag for lower
-# then depending on whether we want to buy or sell, we can fit either model
-
-def shift_data(df, series_name, time_periods=1):
-    
-    new_df = df.copy()
-    
-    for period in range(time_periods):
-        period += 1
-        new_df[series_name+str(period)] = df[series_name].shift(-period)
-    
-    return(new_df)
-
-def get_future_mean(df, series_name, time_periods=1):
-    cols = [series_name+str(period+1) for period in range(time_periods)]
-    return(df[cols].mean(axis=1))
-
-def get_larger_flag(df, future_mean_prop_series_name):
-    df['flag'] = 0
-    df.loc[df[future_mean_prop_series_name] > 0.003, 'flag'] = 1
-    
-    return(df['flag'])
-
-def get_smaller_flag(df, future_mean_prop_series_name):
-    df['flag'] = 0
-    df.loc[df[future_mean_prop_series_name] < -0.003, 'flag'] = 1
-    
-    return(df['flag'])
-'''
-
-# FORGET IT LET'S JUST PREDICT 30 MINS INTO THE FUTURE WITH M2 CANDLES
-
 # let's use the last 30 closes and volumes
 
 def shift_data(df, series_name, time_periods=1, down=True):
@@ -83,7 +47,6 @@ def create_future_data(df, target_name, num_of_targets, future_periods):
     return(new_df)
 
 
-
 if __name__ == '__main__':
     
     data_path = 'test_data.csv'
@@ -109,8 +72,8 @@ if __name__ == '__main__':
     df['diff prop'] = (df['future_median'] - df['c']) / df['c']
     
     df['is_diff'] = 0
-    df.loc[df['diff prop'] > 0.004, 'is_diff'] = 1
-    df.loc[df['diff prop'] < -0.004, 'is_diff'] = 2
+    df.loc[df['diff prop'] > 0.005, 'is_diff'] = 1
+    df.loc[df['diff prop'] < -0.005, 'is_diff'] = 2
     
     df = df.dropna()
     
@@ -149,11 +112,16 @@ if __name__ == '__main__':
     
     tf.random.set_seed(0)    
     
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(600, activation='relu'),
-        tf.keras.layers.Dense(256, activation='relu'),
-        tf.keras.layers.Dense(3, activation='softmax'),
-        ])
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Dense(600, activation='relu'))
+    model.add(tf.keras.layers.Dense(256, activation='relu'))
+    model.add(tf.keras.layers.Dense(3, activation='softmax'))
+    
+    # model = tf.keras.models.Sequential([
+    #     tf.keras.layers.Dense(600, activation='relu'),
+    #     tf.keras.layers.Dense(256, activation='relu'),
+    #     tf.keras.layers.Dense(3, activation='softmax'),
+    #     ])
     
     loss_fn = tf.keras.losses.CategoricalCrossentropy()
     
@@ -182,7 +150,7 @@ if __name__ == '__main__':
     
     
     
-    model.fit(x_train, y_train, epochs=1000)
+    model.fit(x_train, y_train, epochs=5000)
     
     model.evaluate(x_test, y_test)
     
