@@ -5,48 +5,101 @@ Created on Tue Feb 25 00:24:04 2020
 @author: Cetyz
 """
 
+"""
+This "bot" is supposed to perform the high level actions (i.e. listed below).
+Let everything else be handled by other .
+Do I need to convert this into a class?
+
+
+SETUP PHASE:
+(Just once when script is launched)
+1. Import necessary libraries
+2. Load in Oanda account data from json
+3. Initialize Oanda wrapper
+
+PREPARATION PHASE:
+(When trading closes for the weekend)
+
+1. Get latest 5000 (max request) candles
+2. Get new model for the upcoming week based on this data
+3. Check if trading is open?
+
+TRADING PHASE:
+(When trading is open)
+
+1. Check if trading is open (if open, proceed, else proceed to Prep phase)
+2. Refresh candles every interval (only what is necessary to get X last values)
+3a. Using the new data, get TA indicators
+3b. Get model prediction based on model from Prep Phase
+4. Do checks to decide on action (e.g. if RSI < .25 and whatever, do X)
+
+"""
+##############################################################################
+# SETUP PHASE ################################################################
+# 1. Import necessary libraries
 import numpy as np
 import pandas as pd
 import json
 
 from api_wrapper import Oanda
 from TA_funcs import RSI, MACD, MACD_signal
+from data_funcs import transform_candle_data
 
-# get log in info from json
+
+# Load in Oanda account data from json
 with open('config.json', 'r') as f:
     configs = json.load(f)
     token = configs['token']
     account = configs['account']
     user = configs['user']
     
-    
-# initialize oanda api wrapper and get candles    
+# Initialize Oanda wrapper
 oanda = Oanda(token=token, account=account, user=user)
+##############################################################################
+##############################################################################
+
+
+
+##############################################################################
+# PREPARATION PHASE ##########################################################
+#  if prep_phase or something? lol
+
+# 1. Get latest candles
 candles = oanda.get_candle(count=5000, granularity='M5')['candles']
-
-# load candles into pandas dataframe
 df = pd.DataFrame(candles)
-df['time'] = pd.to_datetime(df['time'])
+df = transform_candle_data(df)
 
-def get_value(series, key):
-    return(series[key])
+# 2a. Function call to start training the model?
+# 2b. Get new model for the upcoming week based on this data
+# INSERT FUNCTION TO GET MODEL HERE
 
-df['o'] = df.apply(lambda x: get_value(x['mid'], 'o'), axis=1)
-df['h'] = df.apply(lambda x: get_value(x['mid'], 'h'), axis=1)
-df['l'] = df.apply(lambda x: get_value(x['mid'], 'l'), axis=1)
-df['c'] = df.apply(lambda x: get_value(x['mid'], 'c'), axis=1)
+# 3. Check if trading is open?
+# Based on time? Figure this out
+##############################################################################
+##############################################################################
 
-df = df[['complete', 'volume', 'time', 'o', 'h', 'l', 'c']].set_index('time')
 
-#df.to_csv('test_data.csv')
 
-df['o'] = pd.to_numeric(df['o'])
-df['h'] = pd.to_numeric(df['h'])
-df['l'] = pd.to_numeric(df['l'])
-df['c'] = pd.to_numeric(df['c'])
+##############################################################################
+# TRADING PHASE ##############################################################
+# if trading_phase or something
 
+# 1. Check if trading is open
+# INSERT CHECK HERE
+
+# 2. Refresh candles every interval
+candles = oanda.get_candle(count=100, granularity='M5')['candles'] # might change count to 48 or whatever
+df = pd.DataFrame(candles)
+df = transform_candle_data(df)
+
+# 3a. Get TA indicators
 df['RSI'] = RSI(df['c'])
 df['MACD'] = MACD(df['c'])
 df['MACD Signal'] = MACD_signal(df['c'])
 
-print(df.head())
+# 3b. Get model prediction
+
+# 4. Do checks to decide on action
+
+##############################################################################
+##############################################################################
