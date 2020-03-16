@@ -26,6 +26,8 @@ def prepare_data(candles_df, features_list=['volume', 'c'], target_feature='c',
                  percent_diff_threshold=0.004, future_median_name='future_median',
                  target_cat_name='is_diff'):
     
+    print('Preparing data...')
+    print('Converting candles json into DataFrame...')
     df = candles_df.copy()
     historical_data = create_historical_data(candles_df, features_list, historical_periods)
     df = df.join(historical_data)
@@ -64,7 +66,24 @@ def balance_classes(unbalanced_df, col_to_balance='is_diff', random_state=0):
         balanced_df = pd.concat([balanced_df, working_df])
     return(balanced_df)
     
-    
+def get_targets(df, classification_label='is_diff'):    
+    return(pd.get_dummies(df[classification_label]))
+
+def get_features_list(features_considered=['volume', 'c'], historical_periods=48):
+    features_list = []
+    for feature in features_considered:
+        features_list.append(feature)
+        temp = [feature+'-'+str(period+1) for period in range(historical_periods)]
+        features_list.extend(temp)
+    return(features_list)
+
+def get_normalized_matrix(df, features_list):
+    features = df[features_list]
+    dataset = features.values
+    data_mean = dataset.mean(axis=0)
+    data_std = dataset.std(axis=0)
+    dataset = (dataset-data_mean)/data_std
+    return(dataset)
 
 if __name__ == '__main__':
     
@@ -75,56 +94,58 @@ if __name__ == '__main__':
     
     df = balance_classes(df)    
     
-    # targets_df = pd.get_dummies(df['is_diff'])
+    targets_df = get_targets(df)
+        
+    num_of_cats = len(targets_df.columns)
     
-    # num_of_cats = len(targets_df.columns)
+    features_list = get_features_list()
     
-    # features_considered = ['volume'+'-'+str(period+1) for period in range(time_periods)]
-    # features_considered2 = ['c'+'-'+str(period+1) for period in range(time_periods)]
-    
-    # features_considered.extend(features_considered2)
-    
-    # features = df[features_considered]
+    # features = df[features_list]
+
     # features.index=df['time']
 
     # TRAIN_SPLIT = int(len(features) * 2 / 3)
     
-    # tf.random.set_seed(0)    
+    tf.random.set_seed(0)    
     
-    # model = tf.keras.models.Sequential()
-    # model.add(tf.keras.layers.Dense(600, activation='relu'))
-    # model.add(tf.keras.layers.Dense(256, activation='relu'))
-    # model.add(tf.keras.layers.Dense(3, activation='softmax'))
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Dense(600, activation='relu'))
+    model.add(tf.keras.layers.Dense(256, activation='relu'))
+    model.add(tf.keras.layers.Dense(3, activation='softmax'))
     
-    # loss_fn = tf.keras.losses.CategoricalCrossentropy()
+    loss_fn = tf.keras.losses.CategoricalCrossentropy()
     
-    # # dataset = features.iloc[:, :-1].values
     # dataset = features.values
     # data_mean = dataset.mean(axis=0)
     # data_std = dataset.std(axis=0)
     # dataset = (dataset-data_mean)/data_std
     
-    # targets = targets_df.values
+    dataset = get_normalized_matrix(df, features_list)
     
-    # dataset, targets = shuffle(dataset, targets, random_state=0)
+    TRAIN_SPLIT = int(len(dataset) * 2 / 3)
+    print(TRAIN_SPLIT)
     
-    # x_train = dataset[:TRAIN_SPLIT]
+    targets = targets_df.values
     
-    # x_test = dataset[TRAIN_SPLIT:]
+    dataset, targets = shuffle(dataset, targets, random_state=0)
+    
+    x_train = dataset[:TRAIN_SPLIT]
+    
+    x_test = dataset[TRAIN_SPLIT:]
 
-    # y_train = targets[:TRAIN_SPLIT]
+    y_train = targets[:TRAIN_SPLIT]
 
-    # y_test = targets[TRAIN_SPLIT:]
+    y_test = targets[TRAIN_SPLIT:]
     
     
-    # model.compile(optimizer='adam',
-    #               loss=loss_fn,
-    #               metrics=['CategoricalAccuracy'])
+    model.compile(optimizer='adam',
+                  loss=loss_fn,
+                  metrics=['CategoricalAccuracy'])
     
     
     
-    # model.fit(x_train, y_train, epochs=500)
+    model.fit(x_train, y_train, epochs=100)
     
-    # model.evaluate(x_test, y_test)
+    model.evaluate(x_test, y_test)
     
-    # predictions = model(x_test).numpy()
+    predictions = model(x_test).numpy()
