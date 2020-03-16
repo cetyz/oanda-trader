@@ -89,22 +89,11 @@ if __name__ == '__main__':
     
     data_path = 'test_data.csv'
     df = pd.read_csv(data_path)
-    
     df = prepare_data(df)
-    
     df = balance_classes(df)    
-    
     targets_df = get_targets(df)
-        
     num_of_cats = len(targets_df.columns)
-    
     features_list = get_features_list()
-    
-    # features = df[features_list]
-
-    # features.index=df['time']
-
-    # TRAIN_SPLIT = int(len(features) * 2 / 3)
     
     tf.random.set_seed(0)    
     
@@ -144,8 +133,10 @@ if __name__ == '__main__':
     
     
     
-    model.fit(x_train, y_train, epochs=100)
+    model.fit(x_train, y_train, epochs=200)
     
     model.evaluate(x_test, y_test)
     
     predictions = model(x_test).numpy()
+    
+    print(model(x_test[-1].reshape(1,len(x_test[-1]))).numpy().round())
