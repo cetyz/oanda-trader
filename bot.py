@@ -16,6 +16,7 @@ SETUP PHASE:
 1. Import necessary libraries
 2. Load in Oanda account data from json
 3. Initialize Oanda wrapper
+4. Initialize constants
 
 PREPARATION PHASE:
 (When trading closes for the weekend)
@@ -57,7 +58,7 @@ with open('config.json', 'r') as f:
 # Initialize Oanda wrapper
 oanda = Oanda(token=token, account=account, user=user)
 
-# load constants and parameters
+# Initialize constants
 FEATURES_LIST = get_features_list()
 RSI_UPPER_THRESHOLD = 75
 RSI_LOWER_THRESHOLD = 25
@@ -89,6 +90,7 @@ model = get_model(df)
 ##############################################################################
 # TRADING PHASE ##############################################################
 # if trading_phase or something
+# WRITE SOME LOOP
 
 # 1. Check if trading is open
 # INSERT CHECK HERE

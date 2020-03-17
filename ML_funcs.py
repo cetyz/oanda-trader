@@ -19,6 +19,9 @@ Need functions to:
 1. Start training model
 2. Return model (and the keras model itself should have its own predcit function)
 
+
+I NEED TO TIDY UP AND DOCUMENT THIS THING
+
 """
 
 def prepare_prediction_data(candles_df, features_list=['volume', 'c'],
@@ -147,53 +150,4 @@ if __name__ == '__main__':
     df = pd.read_csv(data_path)
     
     model = get_model(df)
-    # df = prepare_data(df)
-    # df = balance_classes(df)    
-    # targets_df = get_targets(df)
-    # features_list = get_features_list()
-    
-    # tf.random.set_seed(0)    
-    
-    # model = tf.keras.models.Sequential()
-    # model.add(tf.keras.layers.Dense(600, activation='relu'))
-    # model.add(tf.keras.layers.Dense(256, activation='relu'))
-    # model.add(tf.keras.layers.Dense(3, activation='softmax'))
-    
-    # loss_fn = tf.keras.losses.CategoricalCrossentropy()
-    
-    # # dataset = features.values
-    # # data_mean = dataset.mean(axis=0)
-    # # data_std = dataset.std(axis=0)
-    # # dataset = (dataset-data_mean)/data_std
-    
-    # dataset = get_normalized_matrix(df, features_list)
-    
-    # TRAIN_SPLIT = int(len(dataset) * 2 / 3)
-    # print(TRAIN_SPLIT)
-    
-    # targets = targets_df.values
-    
-    # dataset, targets = shuffle(dataset, targets, random_state=0)
-    
-    # x_train = dataset[:TRAIN_SPLIT]
-    
-    # x_test = dataset[TRAIN_SPLIT:]
 
-    # y_train = targets[:TRAIN_SPLIT]
-
-    # y_test = targets[TRAIN_SPLIT:]
-    
-    
-    # model.compile(optimizer='adam',
-    #               loss=loss_fn,
-    #               metrics=['CategoricalAccuracy'])
-    
-    
-    
-    # model.fit(x_train, y_train, epochs=200)
-    
-    # model.evaluate(x_test, y_test)
-    
-    # predictions = model(x_test).numpy()
-    
-    # print(model(x_test[-1].reshape(1,len(x_test[-1]))).numpy().round())
