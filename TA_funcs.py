@@ -38,9 +38,7 @@ def MACD_signal(series):
     return(signal)
 
 if __name__ == '__main__':
-    
-    import seaborn as sns
-    
+        
     data_path = 'test_data.csv'
     df = pd.read_csv(data_path, index_col=0)
     
