@@ -21,6 +21,15 @@ Need functions to:
 
 """
 
+def prepare_prediction_data(candles_df, features_list=['volume', 'c'],
+                            historical_periods=48):
+    df = candles_df.copy()
+    historical_data = create_historical_data(candles_df, features_list, historical_periods)
+    df = df.join(historical_data)
+    df = df.dropna()
+    return(df)
+    
+
 def prepare_data(candles_df, features_list=['volume', 'c'], target_feature='c',
                  historical_periods=48, future_periods=36, future_targets=6,
                  percent_diff_threshold=0.004, future_median_name='future_median',
@@ -85,35 +94,27 @@ def get_normalized_matrix(df, features_list):
     dataset = (dataset-data_mean)/data_std
     return(dataset)
 
-if __name__ == '__main__':
+def get_model(candle_df, random_seed=0):
     
-    data_path = 'test_data.csv'
-    df = pd.read_csv(data_path)
-    df = prepare_data(df)
-    df = balance_classes(df)    
+    df = prepare_data(candle_df)
+    df = balance_classes(df)
     targets_df = get_targets(df)
-    num_of_cats = len(targets_df.columns)
     features_list = get_features_list()
     
-    tf.random.set_seed(0)    
-    
+    if random_seed is not None:
+        tf.random.set_seed(random_seed)
+        
     model = tf.keras.models.Sequential()
     model.add(tf.keras.layers.Dense(600, activation='relu'))
     model.add(tf.keras.layers.Dense(256, activation='relu'))
     model.add(tf.keras.layers.Dense(3, activation='softmax'))
     
     loss_fn = tf.keras.losses.CategoricalCrossentropy()
-    
-    # dataset = features.values
-    # data_mean = dataset.mean(axis=0)
-    # data_std = dataset.std(axis=0)
-    # dataset = (dataset-data_mean)/data_std
-    
+        
     dataset = get_normalized_matrix(df, features_list)
     
     TRAIN_SPLIT = int(len(dataset) * 2 / 3)
-    print(TRAIN_SPLIT)
-    
+
     targets = targets_df.values
     
     dataset, targets = shuffle(dataset, targets, random_state=0)
@@ -137,6 +138,62 @@ if __name__ == '__main__':
     
     model.evaluate(x_test, y_test)
     
-    predictions = model(x_test).numpy()
+    return(model)
     
-    print(model(x_test[-1].reshape(1,len(x_test[-1]))).numpy().round())
+
+if __name__ == '__main__':
+    
+    data_path = 'test_data.csv'
+    df = pd.read_csv(data_path)
+    
+    model = get_model(df)
+    # df = prepare_data(df)
+    # df = balance_classes(df)    
+    # targets_df = get_targets(df)
+    # features_list = get_features_list()
+    
+    # tf.random.set_seed(0)    
+    
+    # model = tf.keras.models.Sequential()
+    # model.add(tf.keras.layers.Dense(600, activation='relu'))
+    # model.add(tf.keras.layers.Dense(256, activation='relu'))
+    # model.add(tf.keras.layers.Dense(3, activation='softmax'))
+    
+    # loss_fn = tf.keras.losses.CategoricalCrossentropy()
+    
+    # # dataset = features.values
+    # # data_mean = dataset.mean(axis=0)
+    # # data_std = dataset.std(axis=0)
+    # # dataset = (dataset-data_mean)/data_std
+    
+    # dataset = get_normalized_matrix(df, features_list)
+    
+    # TRAIN_SPLIT = int(len(dataset) * 2 / 3)
+    # print(TRAIN_SPLIT)
+    
+    # targets = targets_df.values
+    
+    # dataset, targets = shuffle(dataset, targets, random_state=0)
+    
+    # x_train = dataset[:TRAIN_SPLIT]
+    
+    # x_test = dataset[TRAIN_SPLIT:]
+
+    # y_train = targets[:TRAIN_SPLIT]
+
+    # y_test = targets[TRAIN_SPLIT:]
+    
+    
+    # model.compile(optimizer='adam',
+    #               loss=loss_fn,
+    #               metrics=['CategoricalAccuracy'])
+    
+    
+    
+    # model.fit(x_train, y_train, epochs=200)
+    
+    # model.evaluate(x_test, y_test)
+    
+    # predictions = model(x_test).numpy()
+    
+    # print(model(x_test[-1].reshape(1,len(x_test[-1]))).numpy().round())

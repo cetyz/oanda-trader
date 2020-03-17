@@ -44,6 +44,7 @@ import json
 from api_wrapper import Oanda
 from TA_funcs import RSI, MACD, MACD_signal
 from data_funcs import transform_candle_data
+from ML_funcs import get_model, get_features_list, prepare_prediction_data, get_normalized_matrix
 
 
 # Load in Oanda account data from json
@@ -55,6 +56,11 @@ with open('config.json', 'r') as f:
     
 # Initialize Oanda wrapper
 oanda = Oanda(token=token, account=account, user=user)
+
+# load constants and parameters
+FEATURES_LIST = get_features_list()
+RSI_UPPER_THRESHOLD = 75
+RSI_LOWER_THRESHOLD = 25
 ##############################################################################
 ##############################################################################
 
@@ -71,7 +77,7 @@ df = transform_candle_data(df)
 
 # 2a. Function call to start training the model?
 # 2b. Get new model for the upcoming week based on this data
-# INSERT FUNCTION TO GET MODEL HERE
+model = get_model(df)
 
 # 3. Check if trading is open?
 # Based on time? Figure this out
@@ -98,8 +104,25 @@ df['MACD'] = MACD(df['c'])
 df['MACD Signal'] = MACD_signal(df['c'])
 
 # 3b. Get model prediction
+prediction_data = prepare_prediction_data(df)
+prediction_data = get_normalized_matrix(prediction_data, FEATURES_LIST)[-1]
+prediction_data = prediction_data.reshape(1,len(prediction_data))
+prediction = model(prediction_data).numpy().round()[0]
+print(prediction)
+
 
 # 4. Do checks to decide on action
+latest_rsi = df.iloc[-1]['RSI']
+# let's do MACD another time
+
+# Check if we should buy
+if (latest_rsi < RSI_LOWER_THRESHOLD) and (prediction[1] == 1):
+    print('BUYYYYY')
+elif (latest_rsi > RSI_UPPER_THRESHOLD) and (prediction[2] == 1):
+    print('SELLLLL')
+else:
+    print('DO NOTHING')
+
 
 ##############################################################################
 ##############################################################################
