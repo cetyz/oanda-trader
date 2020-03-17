@@ -32,7 +32,8 @@ WAITING PHASE:
 TRADING PHASE:
 (When trading is open)
 
-1. Check if trading is open (if open, proceed, else proceed to Prep phase)
+1a. Check if trading is open (if open, proceed, else proceed to Prep phase)
+1b. Check if we have an open position
 2. Refresh candles every interval (only what is necessary to get X last values)
 3a. Using the new data, get TA indicators
 3b. Get model prediction based on model from Prep Phase
@@ -123,7 +124,10 @@ model = get_model(df)
 # Temporarily, for testing......
 while True:
 
-    # 1. Check if trading is open
+    # 1a. Check if trading is open
+    # INSERT CHECK HERE
+    
+    # 1b. Check if we have an open position
     # INSERT CHECK HERE
     
     # 2. Refresh candles every interval
