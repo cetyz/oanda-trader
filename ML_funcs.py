@@ -20,7 +20,8 @@ Need functions to:
 2. Return model (and the keras model itself should have its own predcit function)
 
 
-I NEED TO TIDY UP AND DOCUMENT THIS THING
+I NEED TO TIDY UP AND DOCUMENT THIS THING. Get rid of the hardcoded function
+parameters. Initialize constants in the main Bot script and use them instead
 
 """
 
