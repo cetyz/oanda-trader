@@ -109,8 +109,8 @@ def get_model(candle_df, random_seed=0):
         tf.random.set_seed(random_seed)
         
     model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Dense(600, activation='relu'))
-    model.add(tf.keras.layers.Dense(256, activation='relu'))
+    model.add(tf.keras.layers.Dense(98, activation='relu'))
+    model.add(tf.keras.layers.Dense(60, activation='relu'))
     model.add(tf.keras.layers.Dense(3, activation='softmax'))
     
     loss_fn = tf.keras.losses.CategoricalCrossentropy()
