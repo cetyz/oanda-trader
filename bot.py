@@ -83,7 +83,7 @@ FEATURES_LIST = get_features_list()
 RSI_UPPER_THRESHOLD = 75
 RSI_LOWER_THRESHOLD = 25
 
-RANDOM_SEED = 0 # integer or None
+RANDOM_SEED = None # integer or None
 FEATURES_LIST = ['volume', 'c']
 TARGET_FEATURE = 'c'
 HISTORICAL_PERIODS = 48
@@ -182,23 +182,25 @@ while True:
             print('Decision is:')
             if (latest_rsi < RSI_LOWER_THRESHOLD) and (prediction[1] == 1):
                 print('Buying...')
-                oanda.market_order(instrument='USD_JPY', units=100.0,
-                                   stop_loss=latest_price-latest_price*stop_loss,
-                                   take_profit=latest_price+latest_price*take_profit)
+                oanda.market_order(instrument='USD_JPY', units=1000.0,
+                                   stop_loss=round(latest_price-latest_price*stop_loss, 3),
+                                   take_profit=round(latest_price+latest_price*take_profit, 3))
             elif (latest_rsi > RSI_UPPER_THRESHOLD) and (prediction[2] == 1):
                 print('Selling...')
-                oanda.market_order(instrument='USD_JPY', units=-100.0,
-                                   stop_loss=latest_price+latest_price*stop_loss,
-                                   take_profit=latest_price-latest_price*take_profit)
+                oanda.market_order(instrument='USD_JPY', units=-1000.0,
+                                   stop_loss=round(latest_price+latest_price*stop_loss, 3),
+                                   take_profit=round(latest_price-latest_price*take_profit, 3))
             else:
                 print('Doing nothing...')
             
             print('Waiting...')
             sleep(300)
-            print('-----------------------------------------------------------------')
+            print('----------------------------------------------------------')
             
         else:
             print('Current position:', open_positions[0])
+            sleep(300)
+            print('----------------------------------------------------------')
 
 ##############################################################################
 ##############################################################################
