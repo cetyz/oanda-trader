@@ -23,7 +23,7 @@ PREPARATION PHASE:
 
 1. Get latest 5000 (max request) candles
 2. Get new model for the upcoming week based on this data
-3. Check if trading is open?
+3. Once model is trained, move to Waiting Phase
 
 WAITING PHASE:
 1. Model is trained (from Prep Phase) but market is closed
@@ -64,6 +64,7 @@ from api_wrapper import Oanda
 from TA_funcs import RSI, MACD, MACD_signal
 from data_funcs import transform_candle_data
 from ML_funcs import get_model, get_features_list, prepare_prediction_data, get_normalized_matrix
+from misc_funcs import is_trading_hours
 
 
 # Load in Oanda account data from json
@@ -81,27 +82,45 @@ CANDLE_GRANULARITY = 'M5'
 FEATURES_LIST = get_features_list()
 RSI_UPPER_THRESHOLD = 75
 RSI_LOWER_THRESHOLD = 25
-# HISTORICAL_PERIODS = 48, etc.
+
+RANDOM_SEED = 0 # integer or None
+FEATURES_LIST = ['volume', 'c']
+TARGET_FEATURE = 'c'
+HISTORICAL_PERIODS = 48
+FUTURE_PERIODS = 36
+FUTURE_TARGETS = 6
+PERCENT_DIFF_THRESHOLD = 0.004
+FUTURE_MEDIAN_NAME = 'future_median'
+TARGET_CAT_NAME = 'is_diff'
+EPOCHS = 200
 ##############################################################################
 ##############################################################################
 
 
+# start main loop here?
+while True:
 
 ##############################################################################
 # PREPARATION PHASE ##########################################################
-#  if prep_phase or something? lol
+
 
 # 1. Get latest candles
-candles = oanda.get_candle(count=5000, granularity=CANDLE_GRANULARITY)['candles']
-df = pd.DataFrame(candles)
-df = transform_candle_data(df)
+    candles = oanda.get_candle(count=5000, granularity=CANDLE_GRANULARITY)['candles']
+    df = pd.DataFrame(candles)
+    df = transform_candle_data(df)
 
 # 2a. Function call to start training the model?
 # 2b. Get new model for the upcoming week based on this data
-model = get_model(df)
+    model = get_model(df, features_list=FEATURES_LIST, target_feature=TARGET_FEATURE,
+                      historical_periods=HISTORICAL_PERIODS, future_periods=FUTURE_PERIODS,
+                      future_targets=FUTURE_TARGETS, percent_diff_threshold=PERCENT_DIFF_THRESHOLD,
+                      future_median_name=FUTURE_MEDIAN_NAME, target_cat_name=TARGET_CAT_NAME,
+                      random_seed=RANDOM_SEED, epochs=EPOCHS)
 
-# 3. Check if trading is open?
-# Based on time? Figure this out
+# 3. Once model is trained, enter next phase
+
+
+
 ##############################################################################
 ##############################################################################
 
@@ -110,7 +129,9 @@ model = get_model(df)
 ##############################################################################
 # WAITING PHASE ##############################################################
 
-# Wait
+    while not is_trading_hours():
+        print('Not trading hours...')
+        sleep(300)
 
 ##############################################################################
 ##############################################################################
@@ -119,52 +140,65 @@ model = get_model(df)
 
 ##############################################################################
 # TRADING PHASE ##############################################################
-# if trading_phase or something
-# WRITE SOME LOOP
-# Temporarily, for testing......
-while True:
 
-    # 1a. Check if trading is open
-    # INSERT CHECK HERE
-    
-    # 1b. Check if we have an open position
-    # INSERT CHECK HERE
-    
-    # 2. Refresh candles every interval
-    candles = oanda.get_candle(count=100, granularity=CANDLE_GRANULARITY)['candles'] # might change count to 48 or whatever
-    df = pd.DataFrame(candles)
-    df = transform_candle_data(df)
-    
-    # 3a. Get TA indicators
-    df['RSI'] = RSI(df['c'])
-    df['MACD'] = MACD(df['c'])
-    df['MACD Signal'] = MACD_signal(df['c'])
-    
-    # 3b. Get model prediction
-    prediction_data = prepare_prediction_data(df)
-    prediction_data = get_normalized_matrix(prediction_data, FEATURES_LIST)[-1]
-    prediction_data = prediction_data.reshape(1,len(prediction_data))
-    prediction = model(prediction_data).numpy().round()[0]
-    print('Model prediction:', prediction)
-    
-    
-    # 4. Do checks to decide on action
-    latest_rsi = df.iloc[-1]['RSI']
-    print('RSI is:', latest_rsi)
-    # let's do MACD another time
-    
-    # Check if we should buy
-    print('Decision is:')
-    if (latest_rsi < RSI_LOWER_THRESHOLD) and (prediction[1] == 1):
-        print('BUYYYYY')
-    elif (latest_rsi > RSI_UPPER_THRESHOLD) and (prediction[2] == 1):
-        print('SELLLLL')
-    else:
-        print('DO NOTHING')
+# 1a. Check if trading is open
+    while is_trading_hours():   
 
-    print('Waiting...')
-    sleep(300)
-    print('-----------------------------------------------------------------')
+# 1b. Check if we have an open position
+        open_positions = json.loads(oanda.get_open_positions())['positions']
+        if len(open_positions) <= 0:
+
+# # 2. Refresh candles every interval
+            candles = oanda.get_candle(count=100, granularity=CANDLE_GRANULARITY)['candles'] # might change count to 48 or whatever
+            df = pd.DataFrame(candles)
+            df = transform_candle_data(df)
+
+# 3a. Get TA indicators
+            df['RSI'] = RSI(df['c'])
+            df['MACD'] = MACD(df['c'])
+            df['MACD Signal'] = MACD_signal(df['c'])
+
+# 3b. Get model prediction
+            full_features_list = get_features_list(FEATURES_LIST, HISTORICAL_PERIODS)
+            prediction_data = prepare_prediction_data(df)
+            prediction_data = get_normalized_matrix(prediction_data, full_features_list)[-1]
+            prediction_data = prediction_data.reshape(1,len(prediction_data))
+            prediction = model(prediction_data).numpy().round()[0]
+            print('Model prediction:', prediction)
+
+
+# 4. Do checks to decide on action
+            latest_rsi = df.iloc[-1]['RSI']
+            print('RSI is:', latest_rsi)
+# let's do MACD another time
+
+# Check if we should buy
+
+# Get latest price
+            latest_price = df.iloc[-1]['c']
+            stop_loss = 0.002
+            take_profit = 0.004
+        
+            print('Decision is:')
+            if (latest_rsi < RSI_LOWER_THRESHOLD) and (prediction[1] == 1):
+                print('Buying...')
+                oanda.market_order(instrument='USD_JPY', units=100.0,
+                                   stop_loss=latest_price-latest_price*stop_loss,
+                                   take_profit=latest_price+latest_price*take_profit)
+            elif (latest_rsi > RSI_UPPER_THRESHOLD) and (prediction[2] == 1):
+                print('Selling...')
+                oanda.market_order(instrument='USD_JPY', units=-100.0,
+                                   stop_loss=latest_price+latest_price*stop_loss,
+                                   take_profit=latest_price-latest_price*take_profit)
+            else:
+                print('Doing nothing...')
+            
+            print('Waiting...')
+            sleep(300)
+            print('-----------------------------------------------------------------')
+            
+        else:
+            print('Current position:', open_positions[0])
 
 ##############################################################################
 ##############################################################################

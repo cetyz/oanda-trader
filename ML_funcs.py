@@ -38,9 +38,7 @@ def prepare_data(candles_df, features_list=['volume', 'c'], target_feature='c',
                  historical_periods=48, future_periods=36, future_targets=6,
                  percent_diff_threshold=0.004, future_median_name='future_median',
                  target_cat_name='is_diff'):
-    
-    print('Preparing data...')
-    print('Converting candles json into DataFrame...')
+
     df = candles_df.copy()
     historical_data = create_historical_data(candles_df, features_list, historical_periods)
     df = df.join(historical_data)
@@ -82,13 +80,13 @@ def balance_classes(unbalanced_df, col_to_balance='is_diff', random_state=0):
 def get_targets(df, classification_label='is_diff'):    
     return(pd.get_dummies(df[classification_label]))
 
-def get_features_list(features_considered=['volume', 'c'], historical_periods=48):
-    features_list = []
-    for feature in features_considered:
-        features_list.append(feature)
+def get_features_list(features_list=['volume', 'c'], historical_periods=48):
+    list_of_features = []
+    for feature in features_list:
+        list_of_features.append(feature)
         temp = [feature+'-'+str(period+1) for period in range(historical_periods)]
-        features_list.extend(temp)
-    return(features_list)
+        list_of_features.extend(temp)
+    return(list_of_features)
 
 def get_normalized_matrix(df, features_list):
     features = df[features_list]
@@ -98,12 +96,26 @@ def get_normalized_matrix(df, features_list):
     dataset = (dataset-data_mean)/data_std
     return(dataset)
 
-def get_model(candle_df, random_seed=0):
+def get_model(candle_df, features_list, target_feature,
+              historical_periods, future_periods, future_targets,
+              percent_diff_threshold, future_median_name, target_cat_name,
+              random_seed, epochs):
     
-    df = prepare_data(candle_df)
-    df = balance_classes(df)
-    targets_df = get_targets(df)
-    features_list = get_features_list()
+    df = prepare_data(candle_df, features_list=features_list,
+                      target_feature=target_feature,
+                      historical_periods=historical_periods,
+                      future_periods=future_periods,
+                      future_targets=future_targets,
+                      percent_diff_threshold=percent_diff_threshold,
+                      future_median_name=future_median_name,
+                      target_cat_name=target_cat_name)
+    
+    df = balance_classes(df, col_to_balance=target_cat_name)
+    
+    targets_df = get_targets(df, classification_label=target_cat_name)
+    
+    full_features_list = get_features_list(features_list=features_list,
+                                           historical_periods=historical_periods)
     
     if random_seed is not None:
         tf.random.set_seed(random_seed)
@@ -115,7 +127,7 @@ def get_model(candle_df, random_seed=0):
     
     loss_fn = tf.keras.losses.CategoricalCrossentropy()
         
-    dataset = get_normalized_matrix(df, features_list)
+    dataset = get_normalized_matrix(df, features_list=full_features_list)
     
     TRAIN_SPLIT = int(len(dataset) * 2 / 3)
 
@@ -123,22 +135,16 @@ def get_model(candle_df, random_seed=0):
     
     dataset, targets = shuffle(dataset, targets, random_state=0)
     
-    x_train = dataset[:TRAIN_SPLIT]
-    
+    x_train = dataset[:TRAIN_SPLIT]    
     x_test = dataset[TRAIN_SPLIT:]
-
     y_train = targets[:TRAIN_SPLIT]
-
     y_test = targets[TRAIN_SPLIT:]
-    
-    
+        
     model.compile(optimizer='adam',
                   loss=loss_fn,
-                  metrics=['CategoricalAccuracy'])
+                  metrics=['CategoricalAccuracy'])   
     
-    
-    
-    model.fit(x_train, y_train, epochs=200)
+    model.fit(x_train, y_train, epochs=epochs)
     
     model.evaluate(x_test, y_test)
     
@@ -147,8 +153,33 @@ def get_model(candle_df, random_seed=0):
 
 if __name__ == '__main__':
     
+    RANDOM_SEED = 0 # integer or None
+    
+    FEATURES_LIST = ['volume', 'c']
+    TARGET_FEATURE = 'c'
+    HISTORICAL_PERIODS = 48
+    FUTURE_PERIODS = 36
+    FUTURE_TARGETS = 6
+    PERCENT_DIFF_THRESHOLD = 0.004
+    FUTURE_MEDIAN_NAME = 'future_median'
+    TARGET_CAT_NAME = 'is_diff'
+    EPOCHS = 200
+    
     data_path = 'test_data.csv'
     df = pd.read_csv(data_path)
     
-    model = get_model(df)
-
+    model = get_model(df, features_list=FEATURES_LIST, target_feature=TARGET_FEATURE,
+                      historical_periods=HISTORICAL_PERIODS, future_periods=FUTURE_PERIODS,
+                      future_targets=FUTURE_TARGETS, percent_diff_threshold=PERCENT_DIFF_THRESHOLD,
+                      future_median_name=FUTURE_MEDIAN_NAME, target_cat_name=TARGET_CAT_NAME,
+                      random_seed=RANDOM_SEED, epochs=EPOCHS)
+    
+    full_features_list = get_features_list(FEATURES_LIST, HISTORICAL_PERIODS)
+    prediction_data = prepare_prediction_data(df)
+    print(prediction_data)
+    prediction_data = get_normalized_matrix(prediction_data, full_features_list)[-1]
+    print(prediction_data)
+    prediction_data = prediction_data.reshape(1,len(prediction_data))
+    print(prediction_data)
+    prediction = model(prediction_data).numpy().round()[0]
+    print('Model prediction:', prediction)
