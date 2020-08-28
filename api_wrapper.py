@@ -156,13 +156,20 @@ if __name__ == "__main__":
         user = configs['user']
         
     oanda = Oanda(token=token, account=account, user=user)
-    candles = oanda.get_candle(count=5)['candles']
-    print(candles)
-#        
-#    print(oanda.get_open_positions())
-#        
-#    oanda.market_order(instrument='USD_JPY', units=10.0, stop_loss=1, take_profit=10000)
-#    print(oanda.get_open_positions())
-#    time.sleep(10)
-#    oanda.market_order(instrument='USD_JPY', units=-10.0, stop_loss=1, take_profit=10000)
-#    print(oanda.get_open_positions())
+    # candles = oanda.get_candle()['candles']
+    # print(candles)
+        
+    # print(oanda.get_open_positions())
+        
+    # oanda.market_order(instrument='USD_JPY', units=10.0, stop_loss=1, take_profit=10000)
+    # print(oanda.get_open_positions())
+    # time.sleep(10)
+    # oanda.market_order(instrument='USD_JPY', units=10.0, stop_loss=1, take_profit=10000)
+    # print(oanda.get_open_positions())    
+    # time.sleep(10)    
+    # oanda.market_order(instrument='USD_JPY', units=-20.0, stop_loss=1, take_profit=10000)
+    print(json.loads(oanda.get_open_positions())['positions'])
+    
+    
+    
+    

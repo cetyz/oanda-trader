@@ -117,15 +117,6 @@ def get_model(candle_df, features_list, target_feature,
     full_features_list = get_features_list(features_list=features_list,
                                            historical_periods=historical_periods)
     
-    if random_seed is not None:
-        tf.random.set_seed(random_seed)
-        
-    model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Dense(98, activation='relu'))
-    model.add(tf.keras.layers.Dense(60, activation='relu'))
-    model.add(tf.keras.layers.Dense(3, activation='softmax'))
-    
-    loss_fn = tf.keras.losses.CategoricalCrossentropy()
         
     dataset = get_normalized_matrix(df, features_list=full_features_list)
     
@@ -139,6 +130,16 @@ def get_model(candle_df, features_list, target_feature,
     x_test = dataset[TRAIN_SPLIT:]
     y_train = targets[:TRAIN_SPLIT]
     y_test = targets[TRAIN_SPLIT:]
+    
+    if random_seed is not None:
+        tf.random.set_seed(random_seed)
+        
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Dense(98, activation='relu'))
+    model.add(tf.keras.layers.Dense(60, activation='relu'))
+    model.add(tf.keras.layers.Dense(3, activation='softmax'))
+    
+    loss_fn = tf.keras.losses.CategoricalCrossentropy()
         
     model.compile(optimizer='adam',
                   loss=loss_fn,

@@ -87,12 +87,12 @@ RANDOM_SEED = None # integer or None
 FEATURES_LIST = ['volume', 'c']
 TARGET_FEATURE = 'c'
 HISTORICAL_PERIODS = 48
-FUTURE_PERIODS = 36
+FUTURE_PERIODS = 12
 FUTURE_TARGETS = 6
 PERCENT_DIFF_THRESHOLD = 0.004
 FUTURE_MEDIAN_NAME = 'future_median'
 TARGET_CAT_NAME = 'is_diff'
-EPOCHS = 200
+EPOCHS = 400
 ##############################################################################
 ##############################################################################
 
@@ -176,20 +176,20 @@ while True:
 
 # Get latest price
             latest_price = df.iloc[-1]['c']
-            stop_loss = 0.002
-            take_profit = 0.004
+            stop_loss = 0.0015
+            take_profit = 0.003
         
             print('Decision is:')
             if (latest_rsi < RSI_LOWER_THRESHOLD) and (prediction[1] == 1):
                 print('Buying...')
                 oanda.market_order(instrument='USD_JPY', units=1000.0,
-                                   stop_loss=round(latest_price-latest_price*stop_loss, 3),
-                                   take_profit=round(latest_price+latest_price*take_profit, 3))
+                                   stop_loss=str(round(latest_price-latest_price*stop_loss, 3)),
+                                   take_profit=str(round(latest_price+latest_price*take_profit, 3)))
             elif (latest_rsi > RSI_UPPER_THRESHOLD) and (prediction[2] == 1):
                 print('Selling...')
                 oanda.market_order(instrument='USD_JPY', units=-1000.0,
-                                   stop_loss=round(latest_price+latest_price*stop_loss, 3),
-                                   take_profit=round(latest_price-latest_price*take_profit, 3))
+                                   stop_loss=str(round(latest_price+latest_price*stop_loss, 3)),
+                                   take_profit=str(round(latest_price-latest_price*take_profit, 3)))
             else:
                 print('Doing nothing...')
             
