@@ -63,7 +63,7 @@ class Oanda():
         Returns:
         JSON object
         """
-        print('Attemping to get the last', count, instrument, granularity, 'candles')
+        # print('Attemping to get the last', count, instrument, granularity, 'candles')
         headers = {'Authorization': 'Bearer ' + self.token,
                   'Accept-Datetime-Format': self.time_format}
 
@@ -127,7 +127,7 @@ class Oanda():
         
         r = requests.post(url=url, headers=headers, data=json.dumps(data))
 
-        print(json.loads(r.text))
+        # print(json.loads(r.text))
         return(r)
         
     def get_open_positions(self):

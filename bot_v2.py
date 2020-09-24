@@ -29,6 +29,7 @@ At every time interval:
 # 1. Import necessary libraries
 import json
 from time import sleep
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -51,14 +52,15 @@ with open('config.json', 'r') as f:
 oanda = Oanda(token=token, account=account, user=user)
 
 # Initialize constants
-time_interval = 300 # seconds?
+time_interval = 900 # seconds?
 buy_size = 100 # units
-profit_threshold = 0.0005
-buying_threshold = 0.00025
+profit_threshold = 0.001
+buying_threshold = 0.0005
 
 while True:
     
-    if is_trading_hours:
+    print(datetime.now().ctime())
+    if is_trading_hours():
         
         # check if we have an open long position
         print('Getting open positions...')
@@ -101,7 +103,10 @@ while True:
                 print('Added', buy_size, 'to position')
             else:
                 print('Doing nothing')
-            
+    
+    else:
+        print('Market closed')
+    print('------------------------------------')        
     sleep(time_interval)
             
             

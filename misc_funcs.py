@@ -19,3 +19,5 @@ def is_trading_hours():
     else:
         return(False)
     
+    
+print(is_trading_hours())
